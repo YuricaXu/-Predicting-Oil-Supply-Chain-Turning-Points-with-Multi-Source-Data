@@ -53,4 +53,28 @@ data/processed/archive/
 models/saved/*
 !models/saved/.gitkeep
 *.log
-debug/ 
+debug/
+
+# Ignore all data files
+/data/
+# But keep the final processed CSV
+!data/processed/
+!data/processed/enhanced_data_v3.csv
+
+# Do NOT ignore plots or visualizations
+# (so data/plots/ and visualizations/ will be uploaded)
+
+# Ignore model files
+*.joblib
+*.pkl
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Temporary files
+*.log
+*.tmp 
