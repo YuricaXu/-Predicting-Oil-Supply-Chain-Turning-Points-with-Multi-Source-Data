@@ -12,11 +12,11 @@ import os
 
 def mark_turning_points(data, value_col='value_supply', window=3):
     """
-    标注供应量序列中的拐点（局部极大/极小值）
-    :param data: DataFrame，需包含value_col列
-    :param value_col: 供应量列名
-    :param window: 滑动窗口大小（奇数，默认3）
-    :return: DataFrame，新增is_turning_point列
+    Mark turning points (local maxima/minima) in the supply series
+    :param data: DataFrame, must contain value_col
+    :param value_col: supply column name
+    :param window: sliding window size (odd number, default 3)
+    :return: DataFrame with new column is_turning_point
     """
     values = data[value_col].values
     is_turning = np.zeros(len(values), dtype=int)
