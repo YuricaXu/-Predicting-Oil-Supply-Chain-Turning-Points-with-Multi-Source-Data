@@ -77,4 +77,6 @@ __pycache__/
 
 # Temporary files
 *.log
-*.tmp 
+*.tmp
+
+docs/ 
