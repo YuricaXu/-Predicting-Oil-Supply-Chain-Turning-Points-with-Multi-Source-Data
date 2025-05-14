@@ -5,119 +5,119 @@ import os
 
 def load_eia_data(file_path='data/raw/Weekly_U.S._Ending_Stocks_excluding_SPR_of_Crude_Oil.csv'):
     """
-    加载和处理EIA周度库存数据
+    Load and process EIA weekly inventory data
     """
-    # 跳过前4行元数据
+    # Skip the first 4 lines of metadata
     df = pd.read_csv(file_path, skiprows=4)
     
-    # 重命名列
+    # Rename columns
     df.columns = ['date', 'inventory']
     
-    # 转换日期格式
+    # Convert date format
     df['date'] = pd.to_datetime(df['date'])
     
-    # 设置日期为索引
+    # Set date as index
     df = df.set_index('date')
     
-    # 按日期升序排序
+    # Sort by date ascending
     df = df.sort_index()
     
     return df
 
 def load_jodi_data(file_path='data/raw/QDL-JODI.csv'):
     """
-    加载和处理JODI数据
+    Load and process JODI data
     """
     df = pd.read_csv(file_path)
     
-    # 只保留石油相关数据
+    # Keep only oil-related data
     df = df[df['energy'] == 'OIL']
     
-    # 将日期转换为datetime格式
+    # Convert date to datetime format
     df['date'] = pd.to_datetime(df['date'])
     
-    # 按国家和日期分组计算总库存变化
+    # Group by country and date to calculate total inventory change
     inventory_change = df.groupby(['date', 'country'])['value'].sum().reset_index()
     
-    # 透视表以获得每个国家的单独列
+    # Pivot table to get each country as a separate column
     inventory_wide = inventory_change.pivot(index='date', columns='country', values='value')
     
-    # 计算全球总库存变化
+    # Calculate global total inventory change
     inventory_wide['global_change'] = inventory_wide.sum(axis=1)
     
     return inventory_wide
 
 def calculate_features(eia_data, jodi_data):
     """
-    计算用于预测的特征
+    Calculate features for prediction
     """
-    # 将EIA周度数据转换为月度数据以匹配JODI
+    # Convert EIA weekly data to monthly to match JODI
     eia_monthly = eia_data.resample('M').last()
     
-    # 计算EIA特征
+    # Calculate EIA features
     eia_features = pd.DataFrame(index=eia_monthly.index)
     
-    # 1. 库存水平
+    # 1. Inventory level
     eia_features['us_inventory_level'] = eia_monthly['inventory']
     
-    # 2. 库存变化率（环比）
+    # 2. Month-over-month inventory change rate
     eia_features['us_inventory_mom_change'] = eia_monthly['inventory'].pct_change()
     
-    # 3. 库存水平的5年百分位数
-    rolling_window = 260  # 5年的周数 (52周 * 5年)
+    # 3. 5-year percentile of inventory level
+    rolling_window = 260  # Number of weeks in 5 years (52 weeks * 5 years)
     eia_features['us_inventory_5y_percentile'] = (
         eia_data['inventory']
         .rolling(rolling_window)
         .apply(lambda x: pd.Series(x).rank().iloc[-1] / len(x))
     )
     
-    # 4. 库存变化速度（一阶导数）
+    # 4. Inventory velocity (first derivative)
     eia_features['us_inventory_velocity'] = eia_data['inventory'].diff()
     
-    # 5. 库存加速度（二阶导数）
+    # 5. Inventory acceleration (second derivative)
     eia_features['us_inventory_acceleration'] = eia_data['inventory'].diff().diff()
     
-    # 合并JODI特征
-    # 确保日期对齐
+    # Merge JODI features
+    # Ensure date alignment
     jodi_aligned = jodi_data.reindex(eia_features.index)
     
-    # 6. 全球库存变化
+    # 6. Global inventory change
     eia_features['global_inventory_change'] = jodi_aligned['global_change']
     
-    # 7. 主要地区库存变化
-    for country in ['CHN', 'EU', 'JPN', 'KOR']:  # 主要消费国
+    # 7. Major region inventory changes
+    for country in ['CHN', 'EU', 'JPN', 'KOR']:  # Major consumer countries
         if country in jodi_data.columns:
             eia_features[f'{country.lower()}_inventory_change'] = jodi_aligned[country]
     
     return eia_features
 
 def main():
-    # 加载数据
-    print("加载EIA数据...")
+    # Load data
+    print("Loading EIA data...")
     eia_data = load_eia_data()
-    print("EIA数据加载完成，时间范围：", eia_data.index.min(), "至", eia_data.index.max())
+    print("EIA data loaded, time range:", eia_data.index.min(), "to", eia_data.index.max())
     
-    print("\n加载JODI数据...")
+    print("\nLoading JODI data...")
     jodi_data = load_jodi_data()
-    print("JODI数据加载完成，时间范围：", jodi_data.index.min(), "至", jodi_data.index.max())
+    print("JODI data loaded, time range:", jodi_data.index.min(), "to", jodi_data.index.max())
     
-    # 计算特征
-    print("\n计算特征...")
+    # Calculate features
+    print("\nCalculating features...")
     features = calculate_features(eia_data, jodi_data)
     
-    # 保存处理后的数据
+    # Save processed data
     output_path = os.path.join('data', 'processed', 'inventory_features.csv')
     features.to_csv(output_path)
-    print(f"\n特征数据已保存到: {output_path}")
+    print(f"\nFeature data saved to: {output_path}")
     
-    # 打印数据预览
-    print("\n特征数据预览:")
+    # Print data preview
+    print("\nFeature data preview:")
     print(features.head())
-    print("\n特征统计信息:")
+    print("\nFeature statistics:")
     print(features.describe())
     
-    # 打印缺失值信息
-    print("\n缺失值统计:")
+    # Print missing value info
+    print("\nMissing value statistics:")
     print(features.isnull().sum())
 
 if __name__ == "__main__":
