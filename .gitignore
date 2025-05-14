@@ -79,4 +79,7 @@ __pycache__/
 *.log
 *.tmp
 
-docs/ 
+docs/
+
+# Ignore LaTeX report file
+report.tex 
