@@ -220,27 +220,27 @@ def main():
     # Create output directory
     os.makedirs('data/plots', exist_ok=True)
     
-    # 拐点标注（假设你已集成 mark_turning_points 函数）
+    # Mark turning points
     print("\nMarking turning points...")
     data = mark_turning_points(data, value_col='value_supply', window=5)
     
-    # 季节性分析
+    # Analyze seasonality
     print("\nAnalyzing seasonality...")
     decomposition = analyze_seasonality(data)
     
-    # 平稳性检验
+    # Test stationarity
     print("\nTesting stationarity...")
     is_stationary = test_stationarity(data)
     print(f"Time series is {'stationary' if is_stationary else 'not stationary'}")
     
-    # 特征工程
+    # Feature engineering
     print("\nFeature engineering...")
     data = feature_engineering(data, n_lags=3, ma_windows=[3, 6])
-    # 清理 inf/-inf 和 NaN
+    # Clean inf/-inf and NaN
     data.replace([np.inf, -np.inf], np.nan, inplace=True)
     data = data.dropna()
     
-    # 拐点分类模型
+    # Train turning point classifier
     print("\nTraining turning point classifier...")
     clf, feature_cols = train_turning_point_classifier(data)
     
