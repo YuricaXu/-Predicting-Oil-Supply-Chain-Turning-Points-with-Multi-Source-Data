@@ -84,7 +84,3 @@ docs/
 # Ignore LaTeX report file
 report.tex
 
-# Ignore model version scripts
-scripts/models/versions/v1_baseline.py
-scripts/models/versions/v2_opec.py
-scripts/models/versions/v3_inventory.py 
